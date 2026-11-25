@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  chatsAsA Chat[] @relation("userA")
+  chatsAsB Chat[] @relation("userB")
+
+  @@map("users")
+}
+
+// for a 1:1 chat the smaller user id always goes in userAId,
+// so the unique constraint stops duplicate chats between the same two users
+model Chat {
+  id        Int      @id @default(autoincrement())
+  userAId   Int      @map("user_a_id")
+  userBId   Int      @map("user_b_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userA User @relation("userA", fields: [userAId], references: [id])
+  userB User @relation("userB", fields: [userBId], references: [id])
+
+  @@unique([userAId, userBId])
+  @@map("chats")
+}
